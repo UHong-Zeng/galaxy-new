@@ -313,3 +313,30 @@ export async function deleteLicense(userId: string, id: string) {
     throw new Error(error.message);
   }
 }
+
+export async function getUsersPosition(userId: string) {
+  try {
+    await connectToDB();
+    const userid = await User.findOne({ id: userId }).select("_id");
+    
+    const publicUsers = await User.find({privacy: false});
+    const licensedUsers = await User.find({mapLicenses: userid._id});
+
+    const target = [...publicUsers, ...licensedUsers];
+    // console.log(target);
+
+    const result = target.map((user) => {
+      return {
+        name: user.name,
+        username: user.username,
+        image: user.image,
+        lng: user.lng,
+        lat: user.lat,
+      };
+    })
+    // console.log(result);
+    return result;
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}

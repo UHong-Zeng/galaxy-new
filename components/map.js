@@ -4,15 +4,16 @@ import React, { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./map.css";
-import { updatePosition } from "@/lib/actions/user.actions";
+import { getUsersPosition, updatePosition } from "@/lib/actions/user.actions";
 
-const Map = ({userId}) => {
+const Map = ({ userId }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [lng] = useState(120.2388992);
-  const [lat] = useState(22.986752);
-  const [zoom] = useState(14);
+  const [lng] = useState(120.24);
+  const [lat] = useState(23);
+  const [zoom] = useState(10);
   const [API_KEY] = useState("RqBiuK3vwqHCAXRC99jE");
+  const [usersInform, setUsersInform] = useState([]);
 
   useEffect(() => {
     if (map.current) return; // stops map from intializing more than once
@@ -33,36 +34,60 @@ const Map = ({userId}) => {
         trackUserLocation: true,
       })
     );
-    new maplibregl.Marker({ color: "#FF0000" })
-      .setLngLat([120.2388992, 22.986752])
-      .addTo(map.current);
 
-    let geolocate = new maplibregl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      trackUserLocation: true,
-    });
+    const getUserInform = async () => {
+      const result = await getUsersPosition(userId);
+        result.forEach((user) => {
+          const popup = new maplibregl.Popup({ offset: 25 }).setHTML(
+            `<span style='color: black;'>Name: ${user.name}</span>`
+          )
+          const el = document.createElement("div");
+          el.className = "marker";
+          el.style.backgroundImage = `url(${user.image})`;
+          el.style.backgroundSize = "cover";
+          el.style.width = "50px";
+          el.style.height = "50px";
 
+          new maplibregl.Marker({ element: el })
+          .setLngLat([user.lng, user.lat])
+          .setPopup(popup) // sets a popup on this marker
+          .addTo(map.current);
+        })
+    }
 
     // get Currency
     const options = {
-      enableHighAccuracy: true,
+      enableHighAccuracy: false,
       timeout: 10000,
     };
     const successCallback = (position) => {
-      const updateNewPosition = async() => {
-        await updatePosition(userId, position.coords.longitude, position.coords.latitude);
-      }
+      const updateNewPosition = async () => {
+        await updatePosition(
+          userId,
+          position.coords.longitude,
+          position.coords.latitude
+        );
+
+        
+      };
       console.log(position);
-      updateNewPosition()
+      updateNewPosition();
     };
-    
+
     const errorCallback = (error) => {
       console.log(error);
     };
-    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
-    const watchDog = navigator.geolocation.watchPosition(successCallback, errorCallback);
+    navigator.geolocation.getCurrentPosition(
+      successCallback,
+      errorCallback,
+      options
+    );
+    const watchDog = navigator.geolocation.watchPosition(
+      successCallback,
+      errorCallback
+    );
+
+    getUserInform();
   }, [API_KEY, lng, lat, zoom]);
 
   return (
