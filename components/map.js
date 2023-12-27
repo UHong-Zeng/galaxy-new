@@ -20,7 +20,7 @@ const Map = ({ userId }) => {
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/cadastre-satellite/style.json?key=${API_KEY}`,
+      style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${API_KEY}`,
       center: [lng, lat],
       zoom: zoom,
     });
